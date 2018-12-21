@@ -80,7 +80,8 @@
         Phone
       </span>
       <input
-        v-model="model.phone"
+        ref="phone"
+        v-model.lazy="model.phone"
         class="uk-form-small uk-width-1-1"
       >
     </div>
@@ -90,7 +91,8 @@
         Fax
       </span>
       <input
-        v-model="model.fax"
+        ref="fax"
+        v-model.lazy="model.fax"
         class="uk-form-small uk-width-1-1"
       >
     </div>
@@ -109,6 +111,9 @@
 </template>
 
 <script>
+import Cleave from 'cleave.js';
+import 'cleave.js/dist/addons/cleave-phone.at';
+
 // The URL of the OpenStreetMap endpoint
 // for fetching location data by address.
 const ENDPOINT = `https://nominatim.openstreetmap.org/search`;
@@ -127,6 +132,16 @@ export default {
         this.$emit(`changed-model`, value);
       },
     },
+  },
+  mounted() {
+    const phoneOptions = {
+      phone: true,
+      phoneRegionCode: `AT`,
+    };
+    // eslint-disable-next-line no-new
+    new Cleave(this.$refs.phone, phoneOptions);
+    // eslint-disable-next-line no-new
+    new Cleave(this.$refs.fax, phoneOptions);
   },
   methods: {
     async coordinatesByAddress() {

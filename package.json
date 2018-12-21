@@ -12,6 +12,7 @@
     "lint": "yarn run lint:scripts && yarn run lint:styles"
   },
   "dependencies": {
+    "cleave.js": "^1.4.7",
     "vue": "^2.5.21"
   },
   "devDependencies": {

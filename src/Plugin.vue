@@ -60,6 +60,19 @@
           >
         </label>
       </div>
+      <a
+        class="blok__full-btn uk-margin-small-top"
+        @click="coordinatesByAddress"
+      >
+        <i class="uk-icon-search uk-margin-small-right"/>
+        Generate from address
+      </a>
+      <p
+        v-if="latLngNotFound"
+        class="Address__error"
+      >
+        Could not find coordinates for the given address.
+      </p>
     </div>
 
     <div class="Address__field">
@@ -96,8 +109,17 @@
 </template>
 
 <script>
+// The URL of the OpenStreetMap endpoint
+// for fetching location data by address.
+const ENDPOINT = `https://nominatim.openstreetmap.org/search`;
+
 export default {
   mixins: [window.Storyblok.plugin],
+  data() {
+    return {
+      latLngNotFound: false,
+    };
+  },
   watch: {
     model: {
       deep: true,
@@ -107,6 +129,39 @@ export default {
     },
   },
   methods: {
+    async coordinatesByAddress() {
+      try {
+        // Reset the error message before
+        // fetching new location data.
+        this.latLngNotFound = false;
+
+        // Here we build the query string with
+        // all the address data available to us
+        const queryString = [
+          `city=${encodeURI(this.model.town)}`,
+          `country=${encodeURI(this.model.country)}`,
+          `postalcode=${encodeURI(this.model.postal_code)}`,
+          `street=${encodeURI(this.model.street)}`,
+          `format=jsonv2`,
+        ].join(`&`);
+
+        // We use the new `fetch` API to query
+        // the public OpenStreetMap API.
+        const rawResponse = await fetch(`${ENDPOINT}?${queryString}`);
+        const responseJson = await rawResponse.json();
+        const bestMatch = responseJson[0];
+
+        // Throw error if address is not found.
+        if (!bestMatch) throw new Error(`Address not found`);
+
+        // If OpenStreetMap was able to find us
+        // some coordinates, we update our model.
+        this.model.latitude = parseFloat(bestMatch.lat);
+        this.model.longitude = parseFloat(bestMatch.lon);
+      } catch (error) {
+        this.latLngNotFound = true;
+      }
+    },
     initWith() {
       return {
         country: ``,
@@ -128,5 +183,11 @@ export default {
 <style>
 .Address__field + .Address__field {
   margin-top: 10px;
+}
+
+.Address__error {
+  margin-top: 5px;
+  margin-bottom: 0;
+  color: #d85030;
 }
 </style>
